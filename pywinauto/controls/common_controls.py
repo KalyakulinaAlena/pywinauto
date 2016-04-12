@@ -50,14 +50,13 @@ from .. import win32structures
 from .. import findbestmatch
 from ..RemoteMemoryBlock import RemoteMemoryBlock
 from . import HwndWrapper
+from pywinauto.handleprops import is64bitprocess
  
 from ..timings import Timings
 from ..timings import WaitUntil
  
 if sysinfo.UIA_support:
     from ..uia_defines import IUIA
-    from pywinauto.handleprops import is64bitprocess
- 
  
 # Todo: I should return iterators from things like items() and texts()
 #       to save building full lists all the time
