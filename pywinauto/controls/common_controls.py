@@ -51,6 +51,8 @@ from .. import findbestmatch
 from ..RemoteMemoryBlock import RemoteMemoryBlock
 from . import HwndWrapper
 from pywinauto.handleprops import is64bitprocess
+
+from pywinauto.sysinfo import is_x64_Python
  
 from ..timings import Timings
 from ..timings import WaitUntil
@@ -2462,7 +2464,7 @@ class ToolbarWrapper(HwndWrapper.HwndWrapper):
                 self.button_count())
  
         remote_mem = RemoteMemoryBlock(self)
-        if is64bitprocess(self._element_info.process_id):
+        if is64bitprocess(self._element_info.process_id) or not is_x64_Python():
             button = win32structures.TBBUTTON()
         else:
             button = win32structures.TBBUTTON32()
@@ -2490,7 +2492,7 @@ class ToolbarWrapper(HwndWrapper.HwndWrapper):
  
         button = self.get_button_struct(button_index)
 
-        if is64bitprocess(self._element_info.process_id):
+        if is64bitprocess(self._element_info.process_id) or not is_x64_Python():
             button_info = win32structures.TBBUTTONINFOW()
         else:
             button_info = win32structures.TBBUTTONINFOW32()
