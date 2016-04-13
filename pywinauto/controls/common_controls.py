@@ -2462,7 +2462,11 @@ class ToolbarWrapper(HwndWrapper.HwndWrapper):
                 self.button_count())
  
         remote_mem = RemoteMemoryBlock(self)
-        button = win32structures.TBBUTTON()
+        if is64bitprocess(self._element_info.process_id):
+            button = win32structures.TBBUTTON()
+        else:
+            button = win32structures.TBBUTTON32()
+
         remote_mem.Write(button)
  
         ret = self.send_message(
@@ -2485,8 +2489,12 @@ class ToolbarWrapper(HwndWrapper.HwndWrapper):
         "Return information on the Toolbar button"
  
         button = self.get_button_struct(button_index)
- 
-        button_info = win32structures.TBBUTTONINFOW()
+
+        if is64bitprocess(self._element_info.process_id):
+            button_info = win32structures.TBBUTTONINFOW()
+        else:
+            button_info = win32structures.TBBUTTONINFOW32()
+
         button_info.cbSize = ctypes.sizeof(button_info)
         button_info.dwMask = \
             win32defines.TBIF_COMMAND | \

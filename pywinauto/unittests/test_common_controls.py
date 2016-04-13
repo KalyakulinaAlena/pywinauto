@@ -46,12 +46,15 @@ from pywinauto.actionlogger import ActionLogger
 from pywinauto import backend
 from pywinauto.timings import Timings
 Timings.Defaults()
- 
+
+from pywinauto.win32structures import *
  
 controlspy_folder = os.path.join(
    os.path.dirname(__file__), r"..\..\apps\controlspy0998")
-mfc_samples_folder = mfc_samples_folder32 = os.path.join(
+controlspy_folder_32 = controlspy_folder
+mfc_samples_folder = os.path.join(
    os.path.dirname(__file__), r"..\..\apps\MFC_samples")
+mfc_samples_folder_32 = mfc_samples_folder
 if is_x64_Python():
     controlspy_folder = os.path.join(controlspy_folder, 'x64')
     mfc_samples_folder = os.path.join(mfc_samples_folder, 'x64')
@@ -64,10 +67,14 @@ class RemoteMemoryBlockTestCases(unittest.TestCase):
  
 class TestConfig:
  
-    def __init__(self, app):
-        self.app = app
-        self.dlg = app.RowListSampleApplication
-        self.ctrl = app.RowListSampleApplication.ListView.WrapperObject()
+    def __init__(self, path):
+        self.path = path
+
+    def preprocessing(self):
+        self.app = Application()
+        self.app.start(self.path)
+        self.dlg = self.app.RowListSampleApplication
+        self.ctrl = self.app.RowListSampleApplication.ListView.WrapperObject()
         self.dlg.Toolbar.Button(0).Click() # switch to icon view
         self.dlg.Toolbar.Button(6).Click() # switch off states
  
@@ -90,22 +97,15 @@ class ListViewTestCases(unittest.TestCase):
         ]
  
         if is_x64_Python():
-            app64 = Application()
-            app64.start(os.path.join(mfc_samples_folder, u"RowList.exe"))
- 
-            app32 = Application()
-            app32.start(os.path.join(mfc_samples_folder32, u"RowList.exe"))
- 
-            self.test_configs = [TestConfig(app64), TestConfig(app32)]
-            # self.test_configs = [TestConfig(app64)]
+            self.test_configs = [TestConfig(os.path.join(mfc_samples_folder, u"RowList.exe")),
+                                 TestConfig(os.path.join(mfc_samples_folder_32, u"RowList.exe"))]
+
+            #self.test_configs = [TestConfig(app32, dlg32, ctrl32)]
  
         else:
-            app = Application()
-            app.start(os.path.join(mfc_samples_folder, u"RowList.exe"))
-            self.test_configs = [TestConfig(app)]
+            self.test_configs = [TestConfig(os.path.join(mfc_samples_folder, u"RowList.exe"))]
  
- 
- 
+
     def tearDown(self):
         "Close the application after tests"
         # close the application
@@ -115,21 +115,25 @@ class ListViewTestCases(unittest.TestCase):
     def testFriendlyClass(self):
         "Make sure the ListView friendly class is set correctly"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals (test_config.ctrl.friendly_class_name(), u"ListView")
  
     def testColumnCount(self):
         "Test the ListView ColumnCount method"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals (test_config.ctrl.ColumnCount(), 8)
  
     def testItemCount(self):
         "Test the ListView ItemCount method"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals (test_config.ctrl.ItemCount(), 7)
  
     def testItemText(self):
         "Test the ListView item.Text property"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             item = test_config.ctrl.GetItem(1)
  
             self.assertEquals(item['text'], u"Red")
@@ -138,6 +142,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView Items method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
  
             flat_texts = []
             for row in self.texts:
@@ -152,6 +157,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView texts method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             flat_texts = []
             for row in self.texts:
                 flat_texts.extend(row)
@@ -162,6 +168,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView GetItem method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             for row in range(test_config.ctrl.ItemCount()):
                 for col in range(test_config.ctrl.ColumnCount()):
                     self.assertEquals(
@@ -171,6 +178,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView GetItem method - with text this time"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             for text in [row[0] for row in self.texts]:
                 self.assertEquals(
                     test_config.ctrl.GetItem(text)['text'], text)
@@ -181,6 +189,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView Columns method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             cols = test_config.ctrl.Columns()
             self.assertEqual (len(cols), test_config.ctrl.ColumnCount())
  
@@ -192,6 +201,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test the ListView GetSelectedCount method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals(test_config.ctrl.GetSelectedCount(), 0)
  
             test_config.ctrl.Select(1)
@@ -214,6 +224,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test ListView IsSelected for some items"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
  
             # ensure that the item is not selected
             self.assertEquals(test_config.ctrl.IsSelected(1), False)
@@ -229,6 +240,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test checking the focus of some ListView items"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             print("Select something quick!!")
             time.sleep(3)
             #self.ctrl.Select(1)
@@ -247,6 +259,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test ListView Selecting some items"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.ctrl.Select(1)
             test_config.ctrl.Select(3)
             test_config.ctrl.Select(4)
@@ -259,6 +272,7 @@ class ListViewTestCases(unittest.TestCase):
     def testSelectText(self):
         "Test ListView Selecting some items"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.ctrl.Select(u"Green")
             test_config.ctrl.Select(u"Yellow")
             test_config.ctrl.Select(u"Gray")
@@ -273,6 +287,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test ListView Selecting some items"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.ctrl.Select(1)
             test_config.ctrl.Select(4)
  
@@ -290,6 +305,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test getting the properties for the listview control"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             props = test_config.ctrl.GetProperties()
  
             self.assertEquals(
@@ -309,6 +325,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test columns titles text"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals(test_config.ctrl.GetColumn(0)['text'], u"Color")
             self.assertEquals(test_config.ctrl.GetColumn(1)['text'], u"Red")
             self.assertEquals(test_config.ctrl.GetColumn(2)['text'], u"Green")
@@ -319,6 +336,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test getting item rectangles"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             yellow_rect = test_config.ctrl.GetItemRect('Yellow')
             gold_rect = RECT(13, 0, 61, 53)
             self.assertEquals(yellow_rect.left, gold_rect.left)
@@ -343,6 +361,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test checking/unchecking item"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             if not test_config.dlg.Toolbar.Button(6).IsChecked():
                 test_config.dlg.Toolbar.Button(6).Click()
  
@@ -365,6 +384,7 @@ class ListViewTestCases(unittest.TestCase):
         "Test clicking item rectangles by Click() method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.ctrl.GetItem('Green').Click(where='select')
             self.assertEquals(test_config.ctrl.GetItem('Green').IsSelected(), True)
  
@@ -410,15 +430,16 @@ class ListViewTestCases(unittest.TestCase):
         "Test clicking item rectangles by click_input() method"
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.ctrl.GetItem('Green').click_input(where='select')
             self.assertEquals(test_config.ctrl.GetItem('Green').IsSelected(), True)
- 
+
             test_config.ctrl.GetItem('Magenta').click_input(where='select')
             self.assertEquals(test_config.ctrl.GetItem('Magenta').IsSelected(), True)
             self.assertEquals(test_config.ctrl.GetItem('Green').IsSelected(), False)
             self.assertEquals(test_config.ctrl.GetItem('Green').IsFocused(), False)
             self.assertEquals(test_config.ctrl.GetItem('Green').State() & win32defines.LVIS_FOCUSED, 0)
- 
+
             test_config.ctrl.GetItem('Green').click_input(where='select')
             self.assertEquals(test_config.ctrl.GetItem('Green').IsSelected(), True)
             self.assertEquals(test_config.ctrl.IsSelected('Green'), True) # TODO: deprecated method
@@ -456,6 +477,7 @@ class ListViewTestCases(unittest.TestCase):
     def testItemMethods(self):
         "Test short item methods like Text(), State() etc"
         for test_config in self.test_configs:
+            test_config.preprocessing()
             self.assertEquals(test_config.ctrl.GetItem('Green').Text(), 'Green')
             self.assertEquals(test_config.ctrl.GetItem('Green').Image(), 2)
             self.assertEquals(test_config.ctrl.GetItem('Green').Indent(), 0)
@@ -463,6 +485,7 @@ class ListViewTestCases(unittest.TestCase):
     def testEnsureVisible(self):
  
         for test_config in self.test_configs:
+            test_config.preprocessing()
             test_config.dlg.MoveWindow(width=300)
  
             # Gray is not selected by click because it's not visible
@@ -489,6 +512,7 @@ class ListViewTestCases(unittest.TestCase):
        Test __eq__ and __ne__ cases for _listview_item.
        """
         for test_config in self.test_configs:
+            test_config.preprocessing()
             item1 = test_config.ctrl.GetItem(0, 0)
             item1_copy = test_config.ctrl.GetItem(0, 0)
             item2 = test_config.ctrl.GetItem(1, 0)
